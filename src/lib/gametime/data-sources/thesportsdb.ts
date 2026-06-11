@@ -125,8 +125,7 @@ export class TheSportsDBProvider extends BaseProvider {
   private async get<T>(path: string): Promise<T> {
     const res = await fetch(`${BASE_URL}${path}`, {
       headers: { Accept: 'application/json' },
-      next: { revalidate: 300 },
-    } as RequestInit);
+    });
     if (!res.ok) throw new Error(`TheSportsDB request failed: ${res.status}`);
     return res.json() as Promise<T>;
   }
