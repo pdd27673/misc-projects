@@ -16,6 +16,7 @@ function end(start: string, durationHours: number): string {
 }
 
 const NOW = new Date();
+export const MODULE_LOAD_TIME = NOW.getTime();
 function fromNow(offsetMinutes: number): string {
   const d = new Date(NOW.getTime() + offsetMinutes * 60 * 1000);
   return d.toISOString();

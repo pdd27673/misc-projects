@@ -138,7 +138,7 @@ export class TheSportsDBProvider extends BaseProvider {
       const leagueIds = this.getLeagueIds(params.sport);
       const allEvents: TSDBEvent[] = [];
 
-      for (const leagueId of leagueIds.slice(0, 3)) {
+      for (const leagueId of leagueIds) {
         const data = await this.get<{ events: TSDBEvent[] | null }>(
           `/eventsnextleague.php?id=${leagueId}`
         );
