@@ -7,8 +7,6 @@ import { BottomNav } from '@/components/gametime/BottomNav';
 import { EventDrawer } from '@/components/gametime/EventDrawer';
 import { SearchModal } from '@/components/gametime/SearchModal';
 
-export const runtime = 'edge';
-
 export const metadata: Metadata = {
   title: 'GameTime Grid — Live Sports Schedule & TV Guide',
   description: 'See every sport, every game — live now, up next, and this week. Times in your timezone, channels at a glance.',
