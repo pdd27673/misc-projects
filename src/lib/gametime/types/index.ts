@@ -5,6 +5,8 @@ export type Sport =
   | 'tennis'
   | 'basketball' | 'nba'
   | 'nfl'
+  | 'baseball'
+  | 'hockey'
   | 'cricket'
   | 'rugby' | 'rugby-union' | 'rugby-league'
   | 'golf'

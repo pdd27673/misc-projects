@@ -25,6 +25,8 @@ const ICONS: Record<Sport, string> = {
   cycling: '🚴',
   snooker: '🎱',
   darts: '🎯',
+  baseball: '⚾',
+  hockey: '🏒',
   other: '🏆',
 };
 

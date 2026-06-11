@@ -1,10 +1,11 @@
 import type { SportEvent, FetchParams, ProviderHealth } from '../types';
 import { MockProvider } from './mock-provider';
 import { TheSportsDBProvider } from './thesportsdb';
+import { ESPNProvider } from './espn';
 import type { IDataProvider } from './base';
 import { deduplicateEvents, sortEvents } from '../normalizers';
 
-export { MockProvider, TheSportsDBProvider };
+export { MockProvider, TheSportsDBProvider, ESPNProvider };
 export type { IDataProvider };
 
 const mockProvider = new MockProvider();
