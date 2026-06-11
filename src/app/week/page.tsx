@@ -1,22 +1,24 @@
 'use client';
 
 import { useMemo } from 'react';
-import { MOCK_EVENTS } from '@/lib/gametime/mock-data/events';
+import { useEvents } from '@/lib/gametime/hooks/useEvents';
 import { EventCard } from '@/components/gametime/EventCard';
 import { FilterBar } from '@/components/gametime/FilterBar';
 import { useFilters, usePrefs } from '@/lib/gametime/context/AppContext';
 import { applyFilters, sortEvents, findConflicts } from '@/lib/gametime/normalizers';
 import { isThisWeekInTimezone, groupByLocalDate, getDayLabel } from '@/lib/gametime/time';
+import type { SportEvent } from '@/lib/gametime/types';
 
 export default function WeekPage() {
+  const { events, loading } = useEvents();
   const { filters } = useFilters();
   const prefs = usePrefs();
   const tz = prefs.timezone || 'UTC';
 
   const weekEvents = useMemo(() => {
-    const filtered = applyFilters(MOCK_EVENTS, filters);
+    const filtered = applyFilters(events, filters);
     return sortEvents(filtered.filter(e => isThisWeekInTimezone(e.startTimeUtc, tz)));
-  }, [filters, tz]);
+  }, [events, filters, tz]);
 
   const grouped = useMemo(() => groupByLocalDate(weekEvents, tz), [weekEvents, tz]);
   const sortedDays = Object.keys(grouped).sort();
@@ -31,7 +33,11 @@ export default function WeekPage() {
 
       <FilterBar />
 
-      {weekEvents.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-24 text-gt-muted">
+          <p className="text-sm">Loading schedule…</p>
+        </div>
+      ) : weekEvents.length === 0 ? (
         <div className="text-center py-16 text-gt-muted">
           <div className="text-4xl mb-3">📭</div>
           <p className="text-sm font-medium">No events this week</p>
@@ -40,7 +46,7 @@ export default function WeekPage() {
       ) : (
         <div className="space-y-8">
           {sortedDays.map(dateKey => {
-            const dayEvents = grouped[dateKey];
+            const dayEvents = grouped[dateKey] as SportEvent[];
             const label = getDayLabel(dateKey, tz);
             const isToday = label === 'Today';
             return (
@@ -58,12 +64,8 @@ export default function WeekPage() {
                   <span className="text-xs text-gt-muted">{dayEvents.length} events</span>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-2">
-                  {(dayEvents as Parameters<typeof EventCard>[0]['event'][]).map(event => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      hasConflict={conflicts.has(event.id)}
-                    />
+                  {dayEvents.map(event => (
+                    <EventCard key={event.id} event={event} hasConflict={conflicts.has(event.id)} />
                   ))}
                 </div>
               </section>

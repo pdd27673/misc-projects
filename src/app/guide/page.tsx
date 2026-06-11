@@ -1,16 +1,17 @@
 'use client';
 
 import { useMemo } from 'react';
-import { MOCK_EVENTS } from '@/lib/gametime/mock-data/events';
+import { useEvents } from '@/lib/gametime/hooks/useEvents';
 import { EPGGrid } from '@/components/gametime/EPGGrid';
 import { FilterBar } from '@/components/gametime/FilterBar';
 import { useFilters } from '@/lib/gametime/context/AppContext';
 import { applyFilters } from '@/lib/gametime/normalizers';
 
 export default function GuidePage() {
+  const { events, loading } = useEvents();
   const { filters } = useFilters();
 
-  const events = useMemo(() => applyFilters(MOCK_EVENTS, filters), [filters]);
+  const filteredEvents = useMemo(() => applyFilters(events, filters), [events, filters]);
 
   return (
     <div>
@@ -33,7 +34,13 @@ export default function GuidePage() {
         <span>← scroll to navigate →</span>
       </div>
 
-      <EPGGrid events={events} hoursToShow={14} />
+      {loading ? (
+        <div className="flex items-center justify-center py-24 text-gt-muted">
+          <p className="text-sm">Loading guide…</p>
+        </div>
+      ) : (
+        <EPGGrid events={filteredEvents} hoursToShow={14} />
+      )}
 
       <p className="mt-3 text-[10px] text-gt-muted text-center">
         Times shown in your local timezone · Click any event for details

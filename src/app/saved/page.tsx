@@ -1,25 +1,25 @@
 'use client';
 
 import { useMemo } from 'react';
-import { MOCK_EVENTS } from '@/lib/gametime/mock-data/events';
+import { useEvents } from '@/lib/gametime/hooks/useEvents';
 import { EventCard } from '@/components/gametime/EventCard';
 import { useApp } from '@/lib/gametime/context/AppContext';
 import { sortEvents } from '@/lib/gametime/normalizers';
 import Link from 'next/link';
 
 export default function SavedPage() {
+  const { events } = useEvents();
   const { state } = useApp();
   const savedIds = state.prefs.savedEventIds;
-
-  const savedEvents = useMemo(() => {
-    const events = MOCK_EVENTS.filter(e => savedIds.includes(e.id));
-    return sortEvents(events);
-  }, [savedIds]);
-
   const remindedIds = state.prefs.remindedEventIds;
-  const remindedEvents = useMemo(() => {
-    return MOCK_EVENTS.filter(e => remindedIds.includes(e.id) && !savedIds.includes(e.id));
-  }, [remindedIds, savedIds]);
+
+  const savedEvents = useMemo(() =>
+    sortEvents(events.filter(e => savedIds.includes(e.id))),
+  [events, savedIds]);
+
+  const remindedEvents = useMemo(() =>
+    sortEvents(events.filter(e => remindedIds.includes(e.id) && !savedIds.includes(e.id))),
+  [events, remindedIds, savedIds]);
 
   return (
     <div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { MOCK_EVENTS } from '@/lib/gametime/mock-data/events';
+import { useEvents } from '@/lib/gametime/hooks/useEvents';
 import { EventCard } from '@/components/gametime/EventCard';
 import { FilterBar } from '@/components/gametime/FilterBar';
 import { useFilters, usePrefs } from '@/lib/gametime/context/AppContext';
@@ -20,14 +20,15 @@ function groupByHour<T extends { startTimeUtc: string }>(events: T[], tz: string
 }
 
 export default function TodayPage() {
+  const { events, loading } = useEvents();
   const { filters } = useFilters();
   const prefs = usePrefs();
   const tz = prefs.timezone || 'UTC';
 
   const todayEvents = useMemo(() => {
-    const filtered = applyFilters(MOCK_EVENTS, filters);
+    const filtered = applyFilters(events, filters);
     return sortEvents(filtered.filter(e => isTodayInTimezone(e.startTimeUtc, tz)));
-  }, [filters, tz]);
+  }, [events, filters, tz]);
 
   const byHour = useMemo(() => groupByHour(todayEvents, tz), [todayEvents, tz]);
   const conflicts = useMemo(() => findConflicts(todayEvents), [todayEvents]);
@@ -46,7 +47,11 @@ export default function TodayPage() {
 
       <FilterBar />
 
-      {todayEvents.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-24 text-gt-muted">
+          <p className="text-sm">Loading schedule…</p>
+        </div>
+      ) : todayEvents.length === 0 ? (
         <div className="text-center py-16 text-gt-muted">
           <div className="text-4xl mb-3">📅</div>
           <p className="text-sm font-medium">No events today</p>
@@ -56,7 +61,7 @@ export default function TodayPage() {
         <div className="space-y-6">
           {Array.from(byHour.entries())
             .sort(([a], [b]) => a - b)
-            .map(([hour, events]) => {
+            .map(([hour, hourEvents]) => {
               const slotDate = new Date();
               slotDate.setHours(hour, 0, 0, 0);
               const isPast = slotDate.getTime() < now.getTime() - 60 * 60 * 1000;
@@ -71,15 +76,11 @@ export default function TodayPage() {
                       {formatTime(slotDate.toISOString(), tz, prefs.use24h)}
                     </div>
                     <div className="flex-1 h-px bg-gt-border" />
-                    <span className="text-xs text-gt-muted">{events.length} event{events.length !== 1 ? 's' : ''}</span>
+                    <span className="text-xs text-gt-muted">{hourEvents.length} event{hourEvents.length !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-2">
-                    {events.map(event => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        hasConflict={conflicts.has(event.id)}
-                      />
+                    {hourEvents.map(event => (
+                      <EventCard key={event.id} event={event} hasConflict={conflicts.has(event.id)} />
                     ))}
                   </div>
                 </section>

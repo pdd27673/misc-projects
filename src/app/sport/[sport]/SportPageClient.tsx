@@ -1,13 +1,13 @@
 'use client';
 
 import { useMemo } from 'react';
-import { MOCK_EVENTS } from '@/lib/gametime/mock-data/events';
+import { useEvents } from '@/lib/gametime/hooks/useEvents';
 import { EventCard } from '@/components/gametime/EventCard';
 import { SportIcon } from '@/components/gametime/SportIcon';
 import { sortEvents, findConflicts } from '@/lib/gametime/normalizers';
 import { groupByLocalDate, getDayLabel } from '@/lib/gametime/time';
 import { usePrefs, useApp } from '@/lib/gametime/context/AppContext';
-import type { Sport } from '@/lib/gametime/types';
+import type { Sport, SportEvent } from '@/lib/gametime/types';
 import { SPORTS_LIST } from '@/lib/gametime/types';
 import Link from 'next/link';
 
@@ -16,6 +16,7 @@ interface Props {
 }
 
 export function SportPageClient({ sport }: Props) {
+  const { events, loading } = useEvents();
   const prefs = usePrefs();
   const { dispatch, isFavoriteSport } = useApp();
   const tz = prefs.timezone || 'UTC';
@@ -23,13 +24,13 @@ export function SportPageClient({ sport }: Props) {
 
   const sportMeta = SPORTS_LIST.find(s => s.id === sport);
 
-  const events = useMemo(() => {
-    return sortEvents(MOCK_EVENTS.filter(e => e.sport === sport));
-  }, [sport]);
+  const sportEvents = useMemo(() =>
+    sortEvents(events.filter(e => e.sport === sport)),
+  [events, sport]);
 
-  const grouped = useMemo(() => groupByLocalDate(events, tz), [events, tz]);
+  const grouped = useMemo(() => groupByLocalDate(sportEvents, tz), [sportEvents, tz]);
   const sortedDays = Object.keys(grouped).sort();
-  const conflicts = useMemo(() => findConflicts(events), [events]);
+  const conflicts = useMemo(() => findConflicts(sportEvents), [sportEvents]);
 
   if (!sportMeta) {
     return (
@@ -47,7 +48,7 @@ export function SportPageClient({ sport }: Props) {
           <SportIcon sport={sport} size="lg" />
           <div>
             <h1 className="text-xl font-bold text-gt-text">{sportMeta.label}</h1>
-            <p className="text-sm text-gt-muted">{events.length} upcoming events</p>
+            <p className="text-sm text-gt-muted">{sportEvents.length} upcoming events</p>
           </div>
         </div>
         <button
@@ -62,15 +63,19 @@ export function SportPageClient({ sport }: Props) {
         </button>
       </div>
 
-      {events.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-24 text-gt-muted">
+          <p className="text-sm">Loading…</p>
+        </div>
+      ) : sportEvents.length === 0 ? (
         <div className="text-center py-16 text-gt-muted">
           <div className="text-4xl mb-3">{sportMeta.emoji}</div>
-          <p className="text-sm">No upcoming {sportMeta.label} events in demo data</p>
+          <p className="text-sm">No upcoming {sportMeta.label} events</p>
         </div>
       ) : (
         <div className="space-y-8">
           {sortedDays.map(dateKey => {
-            const dayEvents = grouped[dateKey];
+            const dayEvents = grouped[dateKey] as SportEvent[];
             const label = getDayLabel(dateKey, tz);
             const isToday = label === 'Today';
             return (
@@ -88,11 +93,7 @@ export function SportPageClient({ sport }: Props) {
                 </div>
                 <div className="grid sm:grid-cols-2 gap-2">
                   {dayEvents.map(event => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      hasConflict={conflicts.has(event.id)}
-                    />
+                    <EventCard key={event.id} event={event} hasConflict={conflicts.has(event.id)} />
                   ))}
                 </div>
               </section>

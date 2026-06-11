@@ -1,14 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
-import { MOCK_EVENTS } from '@/lib/gametime/mock-data/events';
-import { BROADCASTERS } from '@/lib/gametime/mock-data/broadcasters';
+import { useEvents } from '@/lib/gametime/hooks/useEvents';
 import { EventCard } from '@/components/gametime/EventCard';
-import { useApp } from '@/lib/gametime/context/AppContext';
-import type { Broadcaster } from '@/lib/gametime/types';
+import type { Broadcaster, SportEvent } from '@/lib/gametime/types';
 
-function ChannelSection({ broadcaster, events }: { broadcaster: Broadcaster; events: typeof MOCK_EVENTS }) {
-  const { dispatch } = useApp();
+function ChannelSection({ broadcaster, events }: { broadcaster: Broadcaster; events: SportEvent[] }) {
   if (events.length === 0) return null;
   return (
     <section className="mb-8">
@@ -37,25 +34,26 @@ function ChannelSection({ broadcaster, events }: { broadcaster: Broadcaster; eve
 }
 
 export default function ChannelsPage() {
+  const { events, loading } = useEvents();
+
   const channelMap = useMemo(() => {
-    const map = new Map<string, typeof MOCK_EVENTS>();
-    for (const event of MOCK_EVENTS) {
+    const map = new Map<string, { broadcaster: Broadcaster; events: SportEvent[] }>();
+    for (const event of events) {
       for (const b of event.broadcasters) {
-        if (!map.has(b.id)) map.set(b.id, []);
-        map.get(b.id)!.push(event);
+        if (!map.has(b.id)) map.set(b.id, { broadcaster: b, events: [] });
+        map.get(b.id)!.events.push(event);
       }
     }
     return map;
-  }, []);
+  }, [events]);
 
-  const sortedBroadcasters = Object.values(BROADCASTERS)
-    .filter(b => channelMap.has(b.id))
-    .sort((a, b) => {
-      // Free first
-      if (a.isFree && !b.isFree) return -1;
-      if (!a.isFree && b.isFree) return 1;
-      return (a.name).localeCompare(b.name);
-    });
+  const sortedChannels = useMemo(() =>
+    Array.from(channelMap.values()).sort((a, b) => {
+      if (a.broadcaster.isFree && !b.broadcaster.isFree) return -1;
+      if (!a.broadcaster.isFree && b.broadcaster.isFree) return 1;
+      return a.broadcaster.name.localeCompare(b.broadcaster.name);
+    }),
+  [channelMap]);
 
   return (
     <div>
@@ -64,29 +62,38 @@ export default function ChannelsPage() {
         <p className="text-sm text-gt-muted">Browse upcoming events by broadcaster</p>
       </div>
 
-      {/* Channel pills */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {sortedBroadcasters.map(b => (
-          <a
-            key={b.id}
-            href={`#${b.id}`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-gt-border bg-gt-surface hover:border-gt-accent/40 text-gt-muted hover:text-gt-text transition-colors"
-          >
-            <span
-              className="size-2 rounded-full"
-              style={{ backgroundColor: b.color ?? '#64748b' }}
-            />
-            {b.shortName ?? b.name}
-            {b.isFree && <span className="text-emerald-400">✓</span>}
-          </a>
-        ))}
-      </div>
-
-      {sortedBroadcasters.map(b => (
-        <div key={b.id} id={b.id}>
-          <ChannelSection broadcaster={b} events={channelMap.get(b.id) ?? []} />
+      {loading ? (
+        <div className="flex items-center justify-center py-24 text-gt-muted">
+          <p className="text-sm">Loading channels…</p>
         </div>
-      ))}
+      ) : sortedChannels.length === 0 ? (
+        <div className="text-center py-16 text-gt-muted">
+          <div className="text-4xl mb-3">📺</div>
+          <p className="text-sm">No broadcaster data available</p>
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {sortedChannels.map(({ broadcaster: b }) => (
+              <a
+                key={b.id}
+                href={`#${b.id}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-gt-border bg-gt-surface hover:border-gt-accent/40 text-gt-muted hover:text-gt-text transition-colors"
+              >
+                <span className="size-2 rounded-full" style={{ backgroundColor: b.color ?? '#64748b' }} />
+                {b.shortName ?? b.name}
+                {b.isFree && <span className="text-emerald-400">✓</span>}
+              </a>
+            ))}
+          </div>
+
+          {sortedChannels.map(({ broadcaster, events: channelEvents }) => (
+            <div key={broadcaster.id} id={broadcaster.id}>
+              <ChannelSection broadcaster={broadcaster} events={channelEvents} />
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }

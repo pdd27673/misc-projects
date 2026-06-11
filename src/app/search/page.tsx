@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { MOCK_EVENTS } from '@/lib/gametime/mock-data/events';
+import { useEvents } from '@/lib/gametime/hooks/useEvents';
 import { EventCard } from '@/components/gametime/EventCard';
 import { sortEvents } from '@/lib/gametime/normalizers';
 import { SPORTS_LIST } from '@/lib/gametime/types';
@@ -9,12 +9,13 @@ import { SportIcon } from '@/components/gametime/SportIcon';
 import Link from 'next/link';
 
 export default function SearchPage() {
+  const { events, loading } = useEvents();
   const [query, setQuery] = useState('');
 
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    const matches = MOCK_EVENTS.filter(e =>
+    const matches = events.filter(e =>
       [
         e.eventTitle,
         e.competition,
@@ -26,7 +27,11 @@ export default function SearchPage() {
       ].join(' ').toLowerCase().includes(q)
     );
     return sortEvents(matches);
-  }, [query]);
+  }, [events, query]);
+
+  const sportCounts = useMemo(() =>
+    Object.fromEntries(SPORTS_LIST.map(s => [s.id, events.filter(e => e.sport === s.id).length])),
+  [events]);
 
   return (
     <div>
@@ -35,7 +40,6 @@ export default function SearchPage() {
         <p className="text-sm text-gt-muted">Find events, sports, teams, athletes</p>
       </div>
 
-      {/* Search input */}
       <div className="relative mb-6">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gt-muted">⌕</span>
         <input
@@ -56,7 +60,6 @@ export default function SearchPage() {
         )}
       </div>
 
-      {/* Results */}
       {query ? (
         results.length === 0 ? (
           <div className="text-center py-12 text-gt-muted">
@@ -71,13 +74,16 @@ export default function SearchPage() {
             </div>
           </div>
         )
+      ) : loading ? (
+        <div className="flex items-center justify-center py-24 text-gt-muted">
+          <p className="text-sm">Loading…</p>
+        </div>
       ) : (
-        /* Browse by sport */
         <div>
           <h2 className="text-xs font-semibold uppercase tracking-widest text-gt-muted mb-3">Browse by Sport</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {SPORTS_LIST.map(s => {
-              const count = MOCK_EVENTS.filter(e => e.sport === s.id).length;
+              const count = sportCounts[s.id] ?? 0;
               if (count === 0) return null;
               return (
                 <Link
