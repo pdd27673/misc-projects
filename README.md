@@ -8,13 +8,14 @@ This is a **branch-based repo**. Each branch is a self-contained project, deploy
 
 ## Projects
 
-| Branch | Description | Live |
-|--------|-------------|------|
-| [`gametime-grid-sports-epg`](../../tree/gametime-grid-sports-epg) | Sports EPG — a TV-guide-style grid for live and upcoming games across every major league | [pdd27673.github.io/misc-projects](https://pdd27673.github.io/misc-projects/) |
+| Branch | Description |
+|--------|-------------|
+| [`gametime-grid-sports-epg`](../../tree/gametime-grid-sports-epg) | Sports EPG — a TV-guide-style grid for live and upcoming games across every major league |
+| [`wada-palette-archive`](../../tree/wada-palette-archive) | A digital companion to Sanzo Wada's *Dictionary of Color Combinations* — 200 beautiful palettes from a 1930s Japanese reference work, browsable and filterable |
 
 ---
 
 ## How it works
 
-New idea? New branch. Ships to GitHub Pages via the deploy workflow baked into each branch.
+New idea? New branch. Each branch ships independently.
 Main is protected — nothing merges here.
