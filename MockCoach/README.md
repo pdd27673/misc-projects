@@ -19,6 +19,18 @@ Two rules define the product:
 > fix a few things on first compile (coordinate conventions in capture, and the
 > exact structured-outputs field shape are the most likely spots).
 
+## Documentation
+
+| Doc | For |
+|---|---|
+| **[docs/RUNBOOK.md](docs/RUNBOOK.md)** | Build, sign, launch, smoke-test, troubleshoot, reset — the local run book |
+| **[docs/USAGE.md](docs/USAGE.md)** | How to use it: the capture loop, the modes, settings, Sidecar |
+| **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** | How it's designed: data flow, modules, concurrency, extension points |
+
+**TL;DR to run it:** `brew install xcodegen` → `cd MockCoach && xcodegen generate`
+→ open in Xcode, set your signing Team, **⌘R** → grant Screen Recording → press
+**⌥⌘C**. Full steps in the [runbook](docs/RUNBOOK.md).
+
 ## The loop
 
 1. Press **⌥⌘C** (global hotkey).
