@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>MockCoach</string>
+    <key>CFBundleDisplayName</key>
+    <string>MockCoach</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+
+    <!-- Menubar-only agent: no Dock icon, no main window on launch. -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- Screen Recording usage description (ScreenCaptureKit capture). -->
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>MockCoach captures the region of your screen containing the coding prompt so it can extract the text on-device.</string>
+
+    <!-- Shown if a CGEventTap-based global hotkey requires Input Monitoring. -->
+    <key>NSInputMonitoringUsageDescription</key>
+    <string>MockCoach listens for a single global hotkey to trigger a capture.</string>
+</dict>
+</plist>

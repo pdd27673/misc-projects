@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      App Sandbox is intentionally DISABLED for v1.
+
+      ScreenCaptureKit works under the sandbox, but the interactive region
+      selector overlay and the Carbon global hotkey are simplest to run
+      unsandboxed while iterating. Enable the sandbox before distribution and
+      re-test capture + hotkey behaviour.
+    -->
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+
+    <!-- Required to reach the model API over the network (APIProvider). -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+</dict>
+</plist>
