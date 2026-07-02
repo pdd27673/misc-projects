@@ -19,7 +19,15 @@ targets:
     type: application
     platform: macOS
     sources:
-      - MockCoach
+      # Exclude the hand-written Info.plist and entitlements from the build
+      # phases — they're wired via the build settings below, not bundled as
+      # resources. (Intentionally no `info:` block: that makes XcodeGen generate
+      # a plist and overwrite the hand-written one that carries the usage
+      # descriptions.)
+      - path: MockCoach
+        excludes:
+          - "Support/Info.plist"
+          - "Support/MockCoach.entitlements"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mockcoach.MockCoach
@@ -27,5 +35,3 @@ targets:
         CODE_SIGN_ENTITLEMENTS: MockCoach/Support/MockCoach.entitlements
         LSUIElement: YES # menubar-only agent app (no Dock icon)
         COMBINE_HIDPI_IMAGES: YES
-    info:
-      path: MockCoach/Support/Info.plist
