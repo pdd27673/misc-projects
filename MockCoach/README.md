@@ -48,10 +48,22 @@ Two rules define the product:
 - **Offline (stub)** — deterministic, no key, no network. Ships as the default
   so you can exercise the whole capture → OCR → parse → render loop immediately.
 - **Claude API** — talks to the Messages API directly (Swift has no official
-  Anthropic SDK) at `https://api.anthropic.com/v1/messages` with model
-  `claude-opus-4-8`, adaptive thinking, and structured outputs
-  (`output_config.format`) so the reply decodes straight into `CoachResponse`.
-  Set your key in **Settings → Model**.
+  Anthropic SDK) at `https://api.anthropic.com/v1/messages`, with structured
+  outputs (`output_config.format`) so the reply decodes straight into
+  `CoachResponse`. Set your key in **Settings → Model**.
+
+### Model agnostic
+
+The provider is model agnostic. **Settings → Model** offers presets — **Opus 4.8**
+(most capable), **Sonnet 5** (balanced, cheaper), and **Haiku 4.5** (cheapest,
+for testing) — plus a free-text field for any model ID.
+
+Capabilities live with the model in `CoachModelOption`, and `APIProvider` shapes
+the request from them: adaptive thinking and the `effort` parameter are sent
+**only** to models that support them (both would `400` on Haiku 4.5), while
+structured outputs is always on. An unknown/custom ID defaults to the
+conservative shape (no thinking, no effort) so hand-typed models tend to work.
+Swapping in a non-Claude backend is just another `CoachProvider` implementation.
 
 ## Building
 

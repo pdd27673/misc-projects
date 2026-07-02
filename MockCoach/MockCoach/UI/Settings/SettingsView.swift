@@ -16,16 +16,44 @@ struct SettingsView: View {
 
     // MARK: Model
 
+    /// Sentinel tag for "type your own model ID".
+    private static let customTag = "__custom__"
+
+    private var modelSelection: Binding<String> {
+        Binding(
+            get: { CoachModelOption.isPreset(app.modelName) ? app.modelName : Self.customTag },
+            set: { newValue in
+                // Selecting a preset sets the ID directly; "Custom…" leaves the
+                // current (possibly custom) value in place for the text field.
+                if newValue != Self.customTag { app.modelName = newValue }
+                else if CoachModelOption.isPreset(app.modelName) { app.modelName = "" }
+            }
+        )
+    }
+
     private var modelTab: some View {
         Form {
             Picker("Coach provider", selection: $app.providerKind) {
                 ForEach(CoachProviderKind.allCases) { Text($0.title).tag($0) }
             }
+
             if app.providerKind == .api {
-                TextField("Model ID", text: $app.modelName)
+                Picker("Model", selection: modelSelection) {
+                    ForEach(CoachModelOption.presets) { Text($0.displayName).tag($0.id) }
+                    Divider()
+                    Text("Custom…").tag(Self.customTag)
+                }
+
+                // Always available so any model ID works — the app is model
+                // agnostic; presets are just conveniences.
+                TextField("Model ID", text: $app.modelName, prompt: Text("e.g. claude-sonnet-5"))
+                    .textFieldStyle(.roundedBorder)
+
                 SecureField("API key", text: $app.apiKey)
-                Text("The key is stored in UserDefaults in this scaffold — move it to the Keychain before distribution.")
+                Text("Haiku 4.5 is great for cheap testing; Sonnet 5 is a good balance. Adaptive thinking and effort are enabled automatically only for models that support them, so switching models won't cause errors.")
                     .font(.caption).foregroundStyle(.secondary)
+                Text("The key is stored in UserDefaults in this scaffold — move it to the Keychain before distribution.")
+                    .font(.caption).foregroundStyle(.tertiary)
             } else {
                 Text("The offline provider returns deterministic guidance and needs no key — good for exercising the full pipeline.")
                     .font(.caption).foregroundStyle(.secondary)

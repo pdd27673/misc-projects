@@ -15,7 +15,12 @@ struct APIProvider: CoachProvider {
 
     /// Read from Settings (Keychain-backed in a real build; see SettingsView).
     var apiKey: String
-    var model: String = "claude-opus-4-8"
+    var model: String = CoachModelOption.defaultID
+
+    /// Per-model request shaping. Set from `CoachModelOption` so the provider
+    /// stays model agnostic — e.g. Haiku 4.5 runs with both off.
+    var useAdaptiveThinking: Bool = true
+    var useEffort: Bool = true
 
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
     private let apiVersion = "2023-06-01"
@@ -35,8 +40,11 @@ struct APIProvider: CoachProvider {
             model: model,
             maxTokens: 8000,
             system: system,
-            thinking: .init(type: "adaptive"),
-            outputConfig: .init(effort: "medium", format: .coachResponseSchema),
+            // Adaptive thinking and effort are gated by model capability so the
+            // same code path works from Opus down to Haiku (which supports
+            // neither and would 400 if they were sent).
+            thinking: useAdaptiveThinking ? .init(type: "adaptive") : nil,
+            outputConfig: .init(effort: useEffort ? "medium" : nil, format: .coachResponseSchema),
             messages: [.init(role: "user", content: userText)]
         )
 
@@ -84,7 +92,9 @@ private struct RequestBody: Encodable {
     let model: String
     let maxTokens: Int
     let system: String
-    let thinking: Thinking
+    /// Omitted from the request when nil (synthesized encoding uses
+    /// `encodeIfPresent` for optionals), so unsupported models don't 400.
+    let thinking: Thinking?
     let outputConfig: OutputConfig
     let messages: [Message]
 
@@ -97,7 +107,8 @@ private struct RequestBody: Encodable {
     struct Thinking: Encodable { let type: String }
 
     struct OutputConfig: Encodable {
-        let effort: String
+        /// Omitted when nil — models without effort support (e.g. Haiku) reject it.
+        let effort: String?
         let format: Format
     }
 

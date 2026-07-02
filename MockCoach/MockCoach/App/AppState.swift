@@ -66,7 +66,7 @@ final class AppState: ObservableObject {
         largeText = defaults.bool(forKey: Keys.largeText)
         providerKind = CoachProviderKind(rawValue: defaults.string(forKey: Keys.provider) ?? "") ?? .offline
         apiKey = defaults.string(forKey: Keys.apiKey) ?? ""
-        modelName = defaults.string(forKey: Keys.model) ?? "claude-opus-4-8"
+        modelName = defaults.string(forKey: Keys.model) ?? CoachModelOption.defaultID
 
         hotkey.onTrigger = { [weak self] in
             Task { await self?.runCaptureFlow(reuseRegion: false) }
@@ -81,11 +81,21 @@ final class AppState: ObservableObject {
         panel.setAlwaysOnTop(alwaysOnTop)
     }
 
-    /// The active coach provider, chosen by settings.
+    /// The active coach provider, chosen by settings. For the API provider the
+    /// request is shaped by the selected model's capabilities, so switching to
+    /// Sonnet or Haiku "just works".
     private var provider: CoachProvider {
         switch providerKind {
-        case .offline: return MockProvider()
-        case .api: return APIProvider(apiKey: apiKey, model: modelName)
+        case .offline:
+            return MockProvider()
+        case .api:
+            let option = CoachModelOption.option(forID: modelName)
+            return APIProvider(
+                apiKey: apiKey,
+                model: option.id,
+                useAdaptiveThinking: option.supportsAdaptiveThinking,
+                useEffort: option.supportsEffort
+            )
         }
     }
 
