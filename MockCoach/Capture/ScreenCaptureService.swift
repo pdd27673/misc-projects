@@ -56,6 +56,90 @@ struct ScreenCaptureService {
         return CaptureFrame(imageURL: url, sourceDisplayID: display.displayID, region: region)
     }
 
+    // MARK: - Automatic browser-window capture
+
+    /// Capture the frontmost browser window with no user selection. This is the
+    /// default "just press the hotkey" path: whatever page is open in the
+    /// focused browser gets captured whole, and it needs no coordinate math
+    /// because ScreenCaptureKit captures the window directly.
+    func captureFrontmostBrowserWindow() async throws -> CaptureFrame {
+        let content: SCShareableContent
+        do {
+            content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+        } catch {
+            throw CaptureError.screenRecordingPermissionDenied
+        }
+
+        guard let window = frontmostBrowserWindow(in: content) else {
+            throw CaptureError.noBrowserWindow
+        }
+
+        let scale = screenScale(forWindowCenter: CGPoint(x: window.frame.midX, y: window.frame.midY))
+        let config = SCStreamConfiguration()
+        config.width = max(1, Int(window.frame.width * scale))
+        config.height = max(1, Int(window.frame.height * scale))
+        config.showsCursor = false
+        config.ignoreShadowsSingleWindow = true
+
+        let filter = SCContentFilter(desktopIndependentWindow: window)
+
+        let image: CGImage
+        do {
+            image = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
+        } catch {
+            throw CaptureError.captureFailed(underlying: error)
+        }
+
+        let url = try write(image)
+        return CaptureFrame(imageURL: url, sourceDisplayID: nil, region: window.frame)
+    }
+
+    /// Bundle IDs of common macOS browsers.
+    private static let browserBundleIDs: Set<String> = [
+        "com.apple.Safari",
+        "com.apple.SafariTechnologyPreview",
+        "com.google.Chrome",
+        "com.google.Chrome.canary",
+        "com.microsoft.edgemac",
+        "com.brave.Browser",
+        "company.thebrowser.Browser",   // Arc
+        "company.thebrowser.dia",       // Dia
+        "org.mozilla.firefox",
+        "org.mozilla.firefoxdeveloperedition",
+        "com.operasoftware.Opera",
+        "com.vivaldi.Vivaldi",
+        "ai.perplexity.comet",
+    ]
+
+    /// Pick the best browser window to capture: prefer the frontmost app's
+    /// windows, then the largest (the main page, not a small popup).
+    private func frontmostBrowserWindow(in content: SCShareableContent) -> SCWindow? {
+        let frontAppID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+
+        let browserWindows = content.windows.filter { window in
+            guard window.isOnScreen,
+                  window.windowLayer == 0,                 // normal windows only
+                  let bundleID = window.owningApplication?.bundleIdentifier,
+                  Self.browserBundleIDs.contains(bundleID) else { return false }
+            // Ignore tiny/utility windows (find bars, dialogs).
+            return window.frame.width > 200 && window.frame.height > 200
+        }
+
+        // Prefer the focused browser; otherwise consider every browser window.
+        let preferred = browserWindows.filter { $0.owningApplication?.bundleIdentifier == frontAppID }
+        let pool = preferred.isEmpty ? browserWindows : preferred
+
+        return pool.max { area($0.frame) < area($1.frame) }
+    }
+
+    private func area(_ r: CGRect) -> CGFloat { r.width * r.height }
+
+    private func screenScale(forWindowCenter center: CGPoint) -> CGFloat {
+        NSScreen.screens.first { $0.frame.contains(center) }?.backingScaleFactor
+            ?? NSScreen.main?.backingScaleFactor
+            ?? 2
+    }
+
     // MARK: - Display resolution
 
     private func displayContaining(

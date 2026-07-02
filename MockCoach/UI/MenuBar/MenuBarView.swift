@@ -12,12 +12,24 @@ struct MenuBarView: View {
 
             Divider()
 
+            // Primary action = the configured hotkey behavior (auto by default).
             Button {
-                Task { await app.runCaptureFlow(reuseRegion: false) }
-            } label: { Label("Capture Problem  (⌥⌘C)", systemImage: "camera.viewfinder") }
+                Task { await app.runCapture(app.defaultCaptureSource) }
+            } label: {
+                Label(app.captureMode == .browserWindow ? "Capture Page  (⌥⌘C)" : "Capture Region  (⌥⌘C)",
+                      systemImage: app.captureMode == .browserWindow ? "macwindow" : "camera.viewfinder")
+            }
 
             Button {
-                Task { await app.runCaptureFlow(reuseRegion: true) }
+                Task { await app.runCapture(.browserWindow) }
+            } label: { Label("Capture Browser Window", systemImage: "macwindow") }
+
+            Button {
+                Task { await app.runCapture(.region) }
+            } label: { Label("Capture Region…", systemImage: "camera.viewfinder") }
+
+            Button {
+                Task { await app.runCapture(.reuseRegion) }
             } label: { Label("Reuse Last Region", systemImage: "arrow.clockwise.viewfinder") }
             .disabled(app.lastRegion == nil)
 

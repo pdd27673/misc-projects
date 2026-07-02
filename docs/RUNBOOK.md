@@ -116,8 +116,10 @@ open ~/Library/Developer/Xcode/DerivedData/MockCoach-*/Build/Products/Debug/Mock
 2. **Pick a provider** (Settings → Model):
    - Leave it on **Offline (stub)** for a no-key smoke test, **or**
    - Choose **Claude API**, pick a model, and paste your **API key**.
-3. **Try the loop:** press **⌥⌘C**, drag over some code/problem text, and watch
-   the panel fill in. Click **Clarify** or **Hint**.
+3. **Try the loop:** open a coding problem in your browser, press **⌥⌘C** (auto
+   mode captures the browser window — no dragging), and watch the panel fill in.
+   Click **Clarify** or **Hint**. (Prefer drag-select? Settings → Capture →
+   Region.)
 
 ---
 
@@ -126,8 +128,9 @@ open ~/Library/Developer/Xcode/DerivedData/MockCoach-*/Build/Products/Debug/Mock
 ### 7a. Offline (no key) — verifies capture → OCR → parse → render
 
 1. Settings → Model → **Offline (stub)**.
-2. Open any coding problem (a LeetCode page, a text file) on screen.
-3. Press **⌥⌘C**, drag over the prompt.
+2. Open a coding problem (e.g. a LeetCode page) in your **browser**.
+3. Press **⌥⌘C** — auto mode captures the browser window (no drag). (Or set
+   Settings → Capture → Region and drag over the prompt.)
 4. Confirm the left pane shows a parsed **Problem / Examples / Constraints**.
 5. Click **Clarify** and **Hint** — you'll get deterministic canned guidance.
 
@@ -153,8 +156,10 @@ If this works, capture, OCR, parsing, and the UI are all wired correctly.
 |---|---|---|
 | **Hotkey ⌥⌘C does nothing** | Another app owns ⌥⌘C, or registration failed | Check Console for `RegisterEventHotKey` errors; try triggering via the menu bar → Capture; rebind in `HotkeyManager.register(keyCode:modifiers:)` |
 | **Capture throws "Screen Recording permission required"** | TCC not granted, or granted to a *previous* signed build | Settings → Permissions → Screen Recording; if you re-signed, remove and re-add MockCoach in System Settings, then relaunch |
-| **Captured region is offset / wrong area** | Coordinate conversion (AppKit bottom-left vs. capture top-left), esp. multi-display | This is the known first-run fix. Reconcile the flip in `RegionSelector.globalTopLeftRect` and the `sourceRect` math in `ScreenCaptureService.capture` for your display layout |
-| **OCR returns nothing** | Text too small/low-contrast, or empty region | Enlarge the on-screen text and recapture; use **Correct…** to type it in; the status bar hints at this |
+| **"No browser window found"** (auto mode) | No focused/qualifying browser window, or an unlisted browser | Focus a browser with the problem open; if you use an uncommon browser, add its bundle ID to `ScreenCaptureService.browserBundleIDs`; or switch to Settings → Capture → Region |
+| **Captured region is offset / wrong area** (region mode) | Coordinate conversion (AppKit bottom-left vs. capture top-left), esp. multi-display | Known first-run fix. Reconcile the flip in `RegionSelector.globalTopLeftRect` and the `sourceRect` math in `ScreenCaptureService.capture`. **Auto browser-window mode avoids this** |
+| **OCR includes tabs/sidebar junk** (auto mode) | Whole window is captured | Use the prompt's **Correct…** editor to trim, or switch to Region mode for a tight crop |
+| **OCR returns nothing** | Text too small/low-contrast, or empty capture | Enlarge/zoom the page and recapture; use **Correct…** to type it in; the status bar hints at this |
 | **API request 400s** | An unsupported field for that model | The provider gates `thinking`/`effort` by model; if you typed a *custom* ID, it defaults to the conservative shape. Verify the model ID string is exact |
 | **API request 401** | Bad/empty API key | Re-paste the key in Settings → Model; ensure no stray whitespace |
 | **API reply won't decode** | Model didn't emit schema-shaped JSON | Confirm `output_config.format` is accepted for your model; check the exact structured-outputs field names against current API docs |

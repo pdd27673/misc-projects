@@ -34,8 +34,9 @@ Full steps in the [runbook](docs/RUNBOOK.md).
 ## The loop
 
 1. Press **⌥⌘C** (global hotkey).
-2. Drag to select a region (or "Reuse last region").
-3. ScreenCaptureKit captures the region → PNG in Application Support.
+2. **Auto mode (default):** the frontmost **browser window** is captured whole —
+   no dragging. (Switch to region/drag or reuse-region in Settings → Capture.)
+3. ScreenCaptureKit captures it → PNG in Application Support.
 4. Vision OCR extracts text as ordered lines.
 5. `PromptParser` splits it into title / problem / examples / constraints.
 6. Pick a mode; the coach engine generates staged guidance in the panel.

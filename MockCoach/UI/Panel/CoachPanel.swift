@@ -27,13 +27,20 @@ struct CoachPanel: View {
     private var toolbar: some View {
         HStack(spacing: 8) {
             Button {
-                Task { await app.runCaptureFlow(reuseRegion: false) }
-            } label: { Label("Capture", systemImage: "camera.viewfinder") }
+                Task { await app.runCapture(.browserWindow) }
+            } label: { Label("Capture Page", systemImage: "macwindow") }
+            .help("Auto-capture the frontmost browser window")
 
             Button {
-                Task { await app.runCaptureFlow(reuseRegion: true) }
-            } label: { Label("Reuse Region", systemImage: "arrow.clockwise.viewfinder") }
+                Task { await app.runCapture(.region) }
+            } label: { Label("Region", systemImage: "camera.viewfinder") }
+            .help("Drag to select a region")
+
+            Button {
+                Task { await app.runCapture(.reuseRegion) }
+            } label: { Label("Reuse", systemImage: "arrow.clockwise.viewfinder") }
             .disabled(app.lastRegion == nil)
+            .help("Re-capture the last region")
 
             Button {
                 Task { await app.rerunOCR() }

@@ -89,10 +89,11 @@ UI observes.
   `PanelController`.
 - **Publishes state**: `session`, `ocrResult`, `selectedMode`, `isBusy`,
   `statusMessage`, `lastError`, `draftUnlocked`, `lastRegion`, plus persisted
-  preferences (`providerKind`, `apiKey`, `modelName`, `alwaysOnTop`,
-  `compactMode`, `largeText`).
-- **Drives the pipeline**: `runCaptureFlow(reuseRegion:)`, `rerunOCR()`,
-  `updateCorrectedText(_:)`, `request(mode:)`, `unlockDraft()`, `load(_:)`.
+  preferences (`captureMode`, `providerKind`, `apiKey`, `modelName`,
+  `alwaysOnTop`, `compactMode`, `largeText`).
+- **Drives the pipeline**: `runCapture(_:)` (`.browserWindow` / `.region` /
+  `.reuseRegion`), `rerunOCR()`, `updateCorrectedText(_:)`, `request(mode:)`,
+  `unlockDraft()`, `load(_:)`.
 
 SwiftUI views (`MenuBarView`, `CoachPanel`, `SettingsView`) receive `AppState`
 as an `@EnvironmentObject` and re-render off its `@Published` properties. There
@@ -128,7 +129,7 @@ Keychain; see the note in `AppState.Keys`.)
 | Module | Type(s) | Responsibility |
 |---|---|---|
 | **App** | `MockCoachApp`, `AppDelegate`, `AppState` | Entry point (menu-bar agent), pipeline coordinator |
-| **Capture** | `ScreenCaptureService`, `RegionSelector`, `CaptureFrame`, `CaptureError` | ScreenCaptureKit capture + drag-to-select overlay |
+| **Capture** | `ScreenCaptureService`, `RegionSelector`, `CaptureFrame`, `CaptureMode`, `CaptureSource`, `CaptureError` | Auto browser-window + drag-to-select ScreenCaptureKit capture |
 | **OCR** | `VisionOCRService`, `OCRLine`, `OCRResult` | Vision text recognition → ordered lines |
 | **Parsing** | `PromptParser`, `ParsedPrompt`, `PromptExample` | Heuristic prompt structuring |
 | **Coach** | `CoachProvider`, `APIProvider`, `MockProvider`, `CoachModelOption`, `CoachMode`, `CoachResponse`, `CoachPrompts` | Staged guidance engine (model-agnostic) |
@@ -138,21 +139,44 @@ Keychain; see the note in `AppState.Keys`.)
 
 ### 5.1 Capture (`ScreenCaptureService`, `RegionSelector`)
 
-`RegionSelector` presents a borderless, dim, full-screen overlay window; the
-user drags a rectangle. It returns the selection in **global, top-left-origin**
-screen coordinates.
+There are three capture sources (`CaptureSource`), selected by the `CaptureMode`
+setting for the hotkey:
 
-`ScreenCaptureService` resolves the `SCDisplay`/`NSScreen` containing that
-region, sets `SCStreamConfiguration.sourceRect` to the display-local rect at the
-screen's backing scale, and captures a single frame via
-`SCScreenshotManager.captureImage(...)`. The PNG is written to
-`~/Library/Application Support/MockCoach/Captures/` and described by a
-`CaptureFrame` (id, timestamp, image URL, display id, region).
+**Auto — browser window (default).**
+`ScreenCaptureService.captureFrontmostBrowserWindow()` lists
+`SCShareableContent.windows`, filters to on-screen, normal-layer windows owned by
+a known browser bundle ID (Safari/Chrome/Arc/Edge/Firefox/Brave/…), prefers the
+**frontmost app's** windows, and picks the **largest** (the main page, not a
+popup). It captures that window directly with
+`SCContentFilter(desktopIndependentWindow:)` — so there is **no coordinate math**
+and the region caveat below doesn't apply. This is the "just press the hotkey"
+path. Trade-off: the whole window is captured, so OCR can include page chrome;
+the user can trim via the prompt's **Correct…** editor.
 
-> **Coordinate caveat.** AppKit uses a bottom-left origin; the capture
-> convention here is top-left. The conversion is exact for the primary display
-> (origin 0,0) but multi-display and mixed-origin layouts are the most likely
-> place to need a fix on first run. See RUNBOOK → Troubleshooting.
+**Region — drag.**
+`RegionSelector` presents a borderless, dim, full-screen overlay; the user drags
+a rectangle, returned in **global, top-left-origin** coordinates.
+`ScreenCaptureService.capture(region:)` resolves the `SCDisplay`/`NSScreen`
+containing it, sets `SCStreamConfiguration.sourceRect` to the display-local rect
+at the screen's backing scale, and captures via `SCScreenshotManager`.
+
+**Reuse region** — re-captures the last `region` with the same `capture(region:)`
+path.
+
+All three write a PNG to `~/Library/Application Support/MockCoach/Captures/` and
+return a `CaptureFrame` (id, timestamp, image URL, display id, region). OCR/parse
+downstream is identical regardless of source.
+
+> **Coordinate caveat (region mode only).** AppKit uses a bottom-left origin; the
+> region convention is top-left. The conversion is exact for the primary display
+> but multi-display/mixed-origin layouts may need a fix on first run. **Auto
+> browser-window capture avoids this entirely** — it's the recommended default.
+> See RUNBOOK → Troubleshooting.
+
+**Alternative not taken (yet):** reading the tab's text via AppleScript /
+Accessibility would give perfect text with no OCR, but needs Automation
+permission and per-browser scripting and breaks on non-scriptable browsers — a
+documented future option, not v1.
 
 ### 5.2 OCR (`VisionOCRService`)
 

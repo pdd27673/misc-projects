@@ -31,6 +31,11 @@ final class AppState: ObservableObject {
     @Published var compactMode: Bool { didSet { defaults.set(compactMode, forKey: Keys.compactMode) } }
     @Published var largeText: Bool { didSet { defaults.set(largeText, forKey: Keys.largeText) } }
 
+    /// What the hotkey does. Default is fully automatic (browser window).
+    @Published var captureMode: CaptureMode {
+        didSet { defaults.set(captureMode.rawValue, forKey: Keys.captureMode) }
+    }
+
     // MARK: Model settings (persisted)
 
     @Published var providerKind: CoachProviderKind {
@@ -58,6 +63,7 @@ final class AppState: ObservableObject {
         static let provider = "providerKind"
         static let apiKey = "apiKey" // NOTE: move to Keychain before distribution.
         static let model = "modelName"
+        static let captureMode = "captureMode"
     }
 
     init() {
@@ -67,9 +73,11 @@ final class AppState: ObservableObject {
         providerKind = CoachProviderKind(rawValue: defaults.string(forKey: Keys.provider) ?? "") ?? .offline
         apiKey = defaults.string(forKey: Keys.apiKey) ?? ""
         modelName = defaults.string(forKey: Keys.model) ?? CoachModelOption.defaultID
+        captureMode = CaptureMode(rawValue: defaults.string(forKey: Keys.captureMode) ?? "") ?? .browserWindow
 
         hotkey.onTrigger = { [weak self] in
-            Task { await self?.runCaptureFlow(reuseRegion: false) }
+            guard let self else { return }
+            Task { await self.runCapture(self.defaultCaptureSource) }
         }
         hotkey.register()
 
@@ -101,9 +109,15 @@ final class AppState: ObservableObject {
 
     // MARK: Capture pipeline
 
-    /// The full first-milestone loop: pick (or reuse) a region, capture, OCR,
-    /// parse, and show the panel. Coach output is generated on demand per mode.
-    func runCaptureFlow(reuseRegion: Bool) async {
+    /// The capture action the hotkey performs, derived from the user's setting.
+    var defaultCaptureSource: CaptureSource {
+        captureMode == .browserWindow ? .browserWindow : .region
+    }
+
+    /// Run the capture pipeline for the given source, then OCR → parse → show.
+    /// `.browserWindow` is fully automatic (no drag); `.region` prompts a drag;
+    /// `.reuseRegion` re-captures the last region.
+    func runCapture(_ source: CaptureSource) async {
         lastError = nil
 
         // Ensure Screen Recording permission before attempting capture.
@@ -114,49 +128,67 @@ final class AppState: ObservableObject {
             return
         }
 
-        let region: CGRect
-        if reuseRegion, let last = lastRegion {
-            region = last
-        } else {
+        // Region selection needs the UI up front (before the busy state), so it
+        // is resolved first; auto/reuse go straight to capture.
+        let region: CGRect?
+        switch source {
+        case .browserWindow:
+            region = nil
+        case .region:
             guard let picked = await regionSelector.selectRegion() else {
                 statusMessage = "Selection cancelled."
                 return
             }
-            region = picked
             lastRegion = picked
+            region = picked
+        case .reuseRegion:
+            guard let last = lastRegion else {
+                statusMessage = "No saved region yet — capture a region once first."
+                return
+            }
+            region = last
         }
 
         isBusy = true
-        statusMessage = "Capturing…"
+        defer { isBusy = false }
+        statusMessage = source == .browserWindow ? "Capturing browser window…" : "Capturing…"
         panel.show()
 
         do {
-            let frame = try await capture.capture(region: region)
-            statusMessage = "Extracting text…"
-            let result = try await ocr.recognize(imageAt: frame.imageURL)
-            let parsed = parser.parse(result.plainText)
-
-            var newSession = CoachSession(
-                imageFileName: frame.imageURL.lastPathComponent,
-                ocrText: result.plainText,
-                parsedPrompt: parsed
-            )
-            if newSession.parsedPrompt.isEmpty {
-                statusMessage = "No text found — try enlarging the prompt and recapturing."
-            } else {
-                statusMessage = "Prompt captured. Pick a mode to get help."
+            let frame: CaptureFrame
+            switch source {
+            case .browserWindow:
+                frame = try await capture.captureFrontmostBrowserWindow()
+                lastRegion = frame.region
+            case .region, .reuseRegion:
+                frame = try await capture.capture(region: region!)
             }
-
-            self.ocrResult = result
-            self.session = newSession
-            self.draftUnlocked = false
-            store.upsert(newSession)
-            _ = newSession // stored
+            try await process(frame)
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             statusMessage = "Capture failed."
         }
-        isBusy = false
+    }
+
+    /// Shared tail: OCR the captured frame, parse it, and start a new session.
+    private func process(_ frame: CaptureFrame) async throws {
+        statusMessage = "Extracting text…"
+        let result = try await ocr.recognize(imageAt: frame.imageURL)
+        let parsed = parser.parse(result.plainText)
+
+        let newSession = CoachSession(
+            imageFileName: frame.imageURL.lastPathComponent,
+            ocrText: result.plainText,
+            parsedPrompt: parsed
+        )
+        statusMessage = newSession.parsedPrompt.isEmpty
+            ? "No text found — enlarge the prompt (or zoom the page) and recapture."
+            : "Prompt captured. Pick a mode to get help."
+
+        self.ocrResult = result
+        self.session = newSession
+        self.draftUnlocked = false
+        store.upsert(newSession)
     }
 
     /// Re-run OCR on the current capture (useful after correcting nothing but

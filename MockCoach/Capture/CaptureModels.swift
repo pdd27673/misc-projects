@@ -32,6 +32,7 @@ struct CaptureFrame: Identifiable, Hashable {
 enum CaptureError: LocalizedError {
     case screenRecordingPermissionDenied
     case noDisplaysAvailable
+    case noBrowserWindow
     case selectionCancelled
     case captureFailed(underlying: Error)
     case couldNotWriteImage
@@ -42,6 +43,8 @@ enum CaptureError: LocalizedError {
             return "Screen Recording permission is required. Enable MockCoach in System Settings → Privacy & Security → Screen Recording."
         case .noDisplaysAvailable:
             return "No shareable displays were found."
+        case .noBrowserWindow:
+            return "No browser window found. Focus a browser (Safari, Chrome, Arc…) with the problem open, or switch to region capture in Settings."
         case .selectionCancelled:
             return "Region selection was cancelled."
         case .captureFailed(let underlying):
@@ -50,4 +53,29 @@ enum CaptureError: LocalizedError {
             return "The captured image could not be saved to disk."
         }
     }
+}
+
+/// What the hotkey does when pressed. The default is fully automatic — grab the
+/// frontmost browser window with no drag.
+enum CaptureMode: String, CaseIterable, Identifiable, Codable {
+    /// Auto-capture the frontmost browser window (no selection).
+    case browserWindow
+    /// Drag to select a region.
+    case region
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .browserWindow: return "Auto — frontmost browser window"
+        case .region: return "Region — drag to select"
+        }
+    }
+}
+
+/// A concrete capture action requested at runtime.
+enum CaptureSource {
+    case browserWindow   // auto: frontmost browser window
+    case region          // interactive drag
+    case reuseRegion     // re-capture the last region
 }

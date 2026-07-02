@@ -6,12 +6,37 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
+            captureTab.tabItem { Label("Capture", systemImage: "camera.viewfinder") }
             modelTab.tabItem { Label("Model", systemImage: "brain") }
             permissionsTab.tabItem { Label("Permissions", systemImage: "lock.shield") }
             appearanceTab.tabItem { Label("Display", systemImage: "textformat.size") }
         }
-        .frame(width: 460, height: 320)
+        .frame(width: 460, height: 340)
         .padding()
+    }
+
+    // MARK: Capture
+
+    private var captureTab: some View {
+        Form {
+            Picker("Hotkey capture", selection: $app.captureMode) {
+                ForEach(CaptureMode.allCases) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.radioGroup)
+
+            switch app.captureMode {
+            case .browserWindow:
+                Text("Pressing ⌥⌘C captures the frontmost browser window automatically — no dragging. Open the problem in Safari, Chrome, Arc, etc., and the whole page is read.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("Because the whole window is captured, some page chrome (tabs, sidebars) may show up in the OCR — use the Clarify view or the prompt's \"Correct…\" editor to trim it.")
+                    .font(.caption).foregroundStyle(.tertiary)
+            case .region:
+                Text("Pressing ⌥⌘C lets you drag a box around just the problem. More precise, but requires a selection each time.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            LabeledContent("Hotkey") { Text("⌥⌘C") }
+        }
     }
 
     // MARK: Model

@@ -37,19 +37,31 @@ global hotkey uses a Carbon shortcut that doesn't require Input Monitoring.
 
 ## 3. The core loop
 
-1. **Press ⌥⌘C** (Option-Command-C) anywhere. This is the global "capture
-   current problem" hotkey. (You can also click the menu-bar icon → **Capture
-   Problem**.)
-2. **Drag a box** over the problem text. Release to capture; press **Esc** to
-   cancel.
-3. MockCoach captures that region, runs on-device OCR, and parses the text. The
-   **helper panel** opens showing the parsed prompt on the left.
-4. **Pick a mode** on the right (start with **Clarify** or **Hint**). The coach
-   generates staged guidance.
+By default MockCoach is **fully automatic** — no dragging:
+
+1. Open the problem in your **browser** (Safari, Chrome, Arc, Edge, …).
+2. **Press ⌥⌘C** (Option-Command-C) anywhere. MockCoach captures the frontmost
+   browser window, runs on-device OCR, and parses the text.
+3. The **helper panel** opens with the parsed prompt on the left.
+4. **Pick a mode** on the right (start with **Clarify** or **Hint**).
 5. Copy any snippet you want with its **Copy** button.
 
-To re-capture the same area later, use **Reuse Region** (menu bar or the panel
-toolbar) — no need to drag again.
+That's it — one keystroke from "problem on screen" to "help in the panel."
+
+### Capture modes
+
+Set the hotkey behavior in **Settings → Capture**:
+
+- **Auto — frontmost browser window** (default): grabs the whole focused browser
+  window. No selection. Because it captures the entire window, some page chrome
+  (tabs, sidebars) can show up in the OCR — trim it with the prompt's
+  **Correct…** editor if needed.
+- **Region — drag to select**: press ⌥⌘C, then drag a box around just the
+  problem. More precise; needs a selection each time. Press **Esc** to cancel.
+
+Regardless of mode, the panel toolbar and menu bar also offer **Capture Page**
+(auto window), **Region…** (drag), and **Reuse** (re-capture the last region) on
+demand.
 
 ---
 
@@ -92,7 +104,13 @@ capturing again — each capture starts a fresh session.
 
 ## 6. Settings
 
-Open **Settings** from the menu-bar popover (or ⌘,). Three tabs:
+Open **Settings** from the menu-bar popover (or ⌘,). Four tabs:
+
+### Capture
+
+- **Hotkey capture** — what ⌥⌘C does:
+  - **Auto — frontmost browser window** (default): no dragging.
+  - **Region — drag to select**: draw a box each time.
 
 ### Model
 
