@@ -12,7 +12,7 @@ This is a **branch-based repo**. Each branch is a self-contained project, deploy
 |--------|-------------|
 | [`gametime-grid-sports-epg`](../../tree/gametime-grid-sports-epg) | Sports EPG — a TV-guide-style grid for live and upcoming games across every major league |
 | [`wada-palette-archive`](../../tree/wada-palette-archive) | A digital companion to Sanzo Wada's *Dictionary of Color Combinations* — 200 beautiful palettes from a 1930s Japanese reference work, browsable and filterable |
-| [`macos-practice-coach`](../../tree/claude/macos-practice-coach-mevme0) | MockCoach — a local macOS interview-practice coach: hotkey screen capture, on-device Vision OCR, prompt parsing, and staged (Clarify→Hint→Plan→Draft) guidance in a Sidecar-friendly floating panel |
+| [`macos-practice-coach`](../../tree/macos-practice-coach-mevme0) | MockCoach — a local macOS interview-practice coach: hotkey screen capture, on-device Vision OCR, prompt parsing, and staged (Clarify→Hint→Plan→Draft) guidance in a Sidecar-friendly floating panel |
 
 ---
 
