@@ -41,11 +41,11 @@ sudo xcode-select -s /Applications/Xcode.app/Contents/Developer   # if not
 ```sh
 git clone <your-fork-or-remote> misc-projects
 cd misc-projects
-git checkout claude/macos-practice-coach-mevme0
-cd MockCoach
+git checkout macos-practice-coach
 ```
 
-(The project lives in the `MockCoach/` subdirectory of the branch.)
+(The branch is self-contained — the app lives at the branch root, not in a
+subfolder. Run everything below from there.)
 
 ---
 
