@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnalysisCard } from "@/components/AnalysisCard";
 import { QuotaBadge } from "@/components/QuotaBadge";
+import { SourcePicker } from "@/components/SourcePicker";
 import type { Article, AnalysisResult } from "@/lib/types";
 
 // Per-article analyze state, so each result row can show its own loading/result/error.
@@ -14,6 +15,7 @@ type AnalyzeState = {
 
 export default function HomePage() {
   const [query, setQuery] = useState("");
+  const [source, setSource] = useState("");
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -30,7 +32,9 @@ export default function HomePage() {
     setSearchError(null);
     setResults([]);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`);
+      const params = new URLSearchParams({ q: query.trim() });
+      if (source) params.set("source", source);
+      const res = await fetch(`/api/search?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Search failed");
       setResults(data.articles);
@@ -72,6 +76,7 @@ export default function HomePage() {
       <h1>Search news</h1>
 
       <form className="searchbar" onSubmit={handleSearch}>
+        <SourcePicker value={source} onChange={setSource} />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
