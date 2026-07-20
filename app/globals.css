@@ -81,6 +81,34 @@ h1 {
   border-color: var(--accent);
 }
 
+/* --- Source picker + history controls --- */
+.source-picker,
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+select {
+  padding: 9px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 /* --- Buttons --- */
 .btn {
   padding: 10px 16px;
