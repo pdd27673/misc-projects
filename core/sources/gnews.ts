@@ -1,6 +1,13 @@
-import type { Article, NewsSourceAdapter } from "./types";
+import { recordCall } from "@/core/db/quota.model";
+import { ConfigError, UpstreamError } from "@/core/util/errors";
+import { withRetry } from "@/core/util/retry";
+import type { NewsSourceAdapter } from "./types";
 
 const GNEWS_ENDPOINT = "https://gnews.io/api/v4/search";
+
+// GNews free tier allows 100 requests/day. Lives here because the limit is a
+// GNews-specific fact; the quota endpoint reads it from this adapter.
+export const GNEWS_DAILY_LIMIT = 100;
 
 // Only the fields we actually use from the GNews response.
 interface GNewsArticle {
@@ -21,7 +28,7 @@ export const gnewsAdapter: NewsSourceAdapter = {
 
   async search(query, limit) {
     const apiKey = process.env.GNEWS_API_KEY;
-    if (!apiKey) throw new Error("GNEWS_API_KEY is not set");
+    if (!apiKey) throw new ConfigError("GNEWS_API_KEY is not set");
 
     const url = new URL(GNEWS_ENDPOINT);
     url.searchParams.set("q", query);
@@ -29,11 +36,17 @@ export const gnewsAdapter: NewsSourceAdapter = {
     url.searchParams.set("lang", "en");
     url.searchParams.set("apikey", apiKey);
 
-    // no-store: news is time-sensitive and we do our own caching at the analyze layer.
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`GNews request failed: ${res.status}`);
+    const data = await withRetry(async () => {
+      // no-store: news is time-sensitive; caching happens at the analyze layer.
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new UpstreamError("gnews", `GNews request failed: ${res.status}`);
+      return (await res.json()) as GNewsResponse;
+    });
 
-    const data = (await res.json()) as GNewsResponse;
+    // Record one call per successful search (retries are rare and not counted
+    // separately). Best-effort: never fail a search because tracking failed.
+    recordCall("gnews").catch(() => {});
+
     return data.articles.map((a) => ({
       title: a.title,
       url: a.url,

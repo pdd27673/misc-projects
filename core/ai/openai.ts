@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { ConfigError, UpstreamError } from "@/core/util/errors";
+import { withRetry } from "@/core/util/retry";
 
 // Single source of truth for sentiment values, reused by the DB schema.
 export const SENTIMENTS = ["positive", "neutral", "negative"] as const;
@@ -19,7 +21,7 @@ let client: OpenAI | null = null;
 function getClient(): OpenAI {
   if (!client) {
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
+    if (!apiKey) throw new ConfigError("OPENAI_API_KEY is not set");
     client = new OpenAI({ apiKey });
   }
   return client;
@@ -28,14 +30,20 @@ function getClient(): OpenAI {
 export async function analyzeArticle(title: string, description: string): Promise<AnalysisResult> {
   const model = process.env.OPENAI_MODEL ?? "gpt-4.1-nano";
 
-  const res = await getClient().chat.completions.create({
-    model,
-    response_format: { type: "json_object" }, // force valid JSON we can parse
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: `Title: ${title}\n\nDescription: ${description}` },
-    ],
-  });
+  const res = await withRetry(() =>
+    getClient()
+      .chat.completions.create({
+        model,
+        response_format: { type: "json_object" }, // force valid JSON we can parse
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: `Title: ${title}\n\nDescription: ${description}` },
+        ],
+      })
+      .catch((err) => {
+        throw new UpstreamError("openai", err instanceof Error ? err.message : "OpenAI request failed");
+      }),
+  );
 
   const raw = res.choices[0]?.message?.content ?? "{}";
   const parsed = JSON.parse(raw) as { summary?: unknown; sentiment?: unknown };

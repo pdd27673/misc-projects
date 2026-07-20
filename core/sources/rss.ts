@@ -1,5 +1,7 @@
 import { XMLParser } from "fast-xml-parser";
-import type { Article, NewsSourceAdapter } from "./types";
+import { UpstreamError } from "@/core/util/errors";
+import { withRetry } from "@/core/util/retry";
+import type { NewsSourceAdapter } from "./types";
 
 // Hacker News front page as an RSS feed. Swap this URL to point the adapter
 // at any other RSS feed — the rest of the adapter is feed-agnostic.
@@ -27,10 +29,13 @@ export const rssAdapter: NewsSourceAdapter = {
   displayName: "Hacker News",
 
   async search(query, limit) {
-    const res = await fetch(HN_FEED_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Hacker News feed request failed: ${res.status}`);
+    const xml = await withRetry(async () => {
+      const res = await fetch(HN_FEED_URL, { cache: "no-store" });
+      if (!res.ok) throw new UpstreamError("hackernews", `Hacker News feed request failed: ${res.status}`);
+      return res.text();
+    });
 
-    const feed = parser.parse(await res.text()) as RssFeed;
+    const feed = parser.parse(xml) as RssFeed;
     const raw = feed.rss?.channel?.item;
     // fast-xml-parser returns a single object (not an array) when the feed has one item.
     const items: RssItem[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
