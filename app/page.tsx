@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnalysisCard } from "@/components/AnalysisCard";
+import { QuotaBadge } from "@/components/QuotaBadge";
 import type { Article, AnalysisResult } from "@/lib/types";
 
 // Per-article analyze state, so each result row can show its own loading/result/error.
@@ -18,6 +19,8 @@ export default function HomePage() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [results, setResults] = useState<Article[]>([]);
   const [analyses, setAnalyses] = useState<Record<string, AnalyzeState>>({});
+  // Bumped after each search so the quota badge re-fetches its remaining count.
+  const [quotaKey, setQuotaKey] = useState(0);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +39,7 @@ export default function HomePage() {
     } finally {
       setSearching(false);
       setSearched(true);
+      setQuotaKey((k) => k + 1);
     }
   }
 
@@ -78,6 +82,8 @@ export default function HomePage() {
           {searching ? "Searching…" : "Search"}
         </button>
       </form>
+
+      <QuotaBadge refreshKey={quotaKey} />
 
       {searchError && <p className="error">{searchError}</p>}
       {searched && !searching && !searchError && results.length === 0 && (

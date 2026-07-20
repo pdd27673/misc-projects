@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { httpStatusFor } from "@/core/util/errors";
 import { analyze } from "@/services/analyze.service";
 
 // POST /api/analyze
@@ -26,7 +27,8 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(result);
   } catch (err) {
+    // ConfigError -> 500, UpstreamError (OpenAI) -> 502.
     const message = err instanceof Error ? err.message : "Analysis failed";
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: message }, { status: httpStatusFor(err) });
   }
 }

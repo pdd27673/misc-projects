@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { httpStatusFor } from "@/core/util/errors";
 import { searchArticles } from "@/services/search.service";
 
 // GET /api/search?q=<query>&source=<sourceId>
@@ -16,8 +17,8 @@ export async function GET(request: Request) {
     const articles = await searchArticles(query, source);
     return NextResponse.json({ articles });
   } catch (err) {
-    // Upstream (news API) failure — surface a 502 with the reason.
+    // ConfigError -> 500, UpstreamError (news API) -> 502.
     const message = err instanceof Error ? err.message : "Search failed";
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: message }, { status: httpStatusFor(err) });
   }
 }
