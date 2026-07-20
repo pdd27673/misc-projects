@@ -53,3 +53,147 @@ a {
 .nav a:hover {
   color: var(--text);
 }
+
+h1 {
+  font-size: 1.6rem;
+  margin: 8px 0 20px;
+}
+
+/* --- Search bar --- */
+.searchbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.searchbar input {
+  flex: 1;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.searchbar input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* --- Buttons --- */
+.btn {
+  padding: 10px 16px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+/* --- Results / history list --- */
+.results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.result {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.result-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.result-title {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.result-title:hover {
+  text-decoration: underline;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.summary {
+  margin: 8px 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.8rem;
+}
+
+.error {
+  color: var(--neg);
+  margin: 8px 0;
+}
+
+/* --- Analysis card (shown under a result after analyzing) --- */
+.analysis {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.analysis-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+/* --- Sentiment badges --- */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0b0d10;
+}
+
+.badge-positive {
+  background: var(--pos);
+}
+
+.badge-neutral {
+  background: var(--neu);
+}
+
+.badge-negative {
+  background: var(--neg);
+  color: white;
+}
