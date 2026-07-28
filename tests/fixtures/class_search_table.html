@@ -1,0 +1,124 @@
+<!doctype html>
+<!--
+  Stand-in for a CSUN Class Search results page, laid out the way PeopleSoft
+  renders a section list: one table per course, under a course heading, with
+  the columns CSUN documents (class number, status, regular seats available).
+  Column spellings and the status-as-image-alt trick are the parts the parser
+  has to survive, so they are exercised here.
+-->
+<html lang="en">
+<head><title>Class Search Results</title></head>
+<body>
+<h1>Class Search Results — Fall 2026</h1>
+
+<h2>COMP 586 - Advanced Topics in Software Engineering</h2>
+<table class="psc_grid">
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Class Number</th>
+      <th>Section</th>
+      <th>Days and Times</th>
+      <th>Room</th>
+      <th>Instructor</th>
+      <th>Instruction Mode</th>
+      <th>Units</th>
+      <th>Regular Seats Available</th>
+      <th>Enrollment Capacity</th>
+      <th>Waitlist Seats Available</th>
+      <th>Session</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><img src="/img/open.gif" alt="Open"></td>
+      <td>12345</td>
+      <td>01</td>
+      <td>TuTh 7:00PM-8:15PM</td>
+      <td>JD 1600</td>
+      <td>Rivera, A.</td>
+      <td>In Person</td>
+      <td>3</td>
+      <td>8</td>
+      <td>30</td>
+      <td>10</td>
+      <td>Regular</td>
+    </tr>
+    <tr>
+      <td><img src="/img/closed.gif" alt="Closed"></td>
+      <td>12346</td>
+      <td>02</td>
+      <td>MW 4:00PM-5:15PM</td>
+      <td>JD 1620</td>
+      <td>Chen, L.</td>
+      <td>In Person</td>
+      <td>3</td>
+      <td>0</td>
+      <td>30</td>
+      <td>4</td>
+      <td>Regular</td>
+    </tr>
+    <tr>
+      <td><img src="/img/wait.gif" alt="Wait List"></td>
+      <td>12347</td>
+      <td>03</td>
+      <td>TBA</td>
+      <td>Online</td>
+      <td>Staff</td>
+      <td>Online (Asynchronous)</td>
+      <td>3</td>
+      <td>0</td>
+      <td>35</td>
+      <td>2</td>
+      <td>Regular</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>COMP 620 - Advanced Algorithms</h2>
+<table class="psc_grid">
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Class Nbr</th>
+      <th>Section</th>
+      <th>Days</th>
+      <th>Time</th>
+      <th>Room</th>
+      <th>Instructor</th>
+      <th>Units</th>
+      <th>Seats Available</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Open</td>
+      <td>13001</td>
+      <td>01</td>
+      <td>TuTh</td>
+      <td>7:00 PM - 8:15 PM</td>
+      <td>JD 1600</td>
+      <td>Okafor, N.</td>
+      <td>3</td>
+      <td>12</td>
+    </tr>
+    <tr>
+      <td>Open</td>
+      <td>13002</td>
+      <td>02</td>
+      <td>MW</td>
+      <td>6:30 PM - 7:45 PM</td>
+      <td>JD 1610</td>
+      <td>Okafor, N.</td>
+      <td>3</td>
+      <td>5</td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="layout">
+  <tr><td>Navigation</td><td>Help</td></tr>
+  <tr><td>Contact the Registrar</td><td>Accessibility</td></tr>
+</table>
+</body>
+</html>

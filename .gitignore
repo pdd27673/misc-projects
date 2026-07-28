@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# saved class-search pages and captured endpoint configs
+*.local.html
+csun.json
+
+node_modules/
+.next/
+.wrangler/
+out/
+.env
+.env.local
+.DS_Store

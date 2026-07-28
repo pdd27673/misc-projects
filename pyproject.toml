@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "csunclasses"
+version = "0.1.0"
+description = "Look up CSUN class availability and meeting times, and build conflict-free schedules"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+]
+
+[project.optional-dependencies]
+fast = ["lxml>=5.0"]
+dev = ["pytest>=8.0", "lxml>=5.0"]
+
+[project.scripts]
+csun-classes = "csunclasses.cli:main"
+
+[tool.setuptools]
+packages = ["csunclasses"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
