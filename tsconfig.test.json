@@ -1,0 +1,8 @@
+{
+  "//": "Tests only. Kept separate so `node:fs` stays available here without letting client code reach for Node APIs.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["tests/web/**/*.ts", "src/lib/**/*.ts"]
+}

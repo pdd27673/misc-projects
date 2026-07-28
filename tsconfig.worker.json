@@ -1,0 +1,19 @@
+{
+  "//": "Cloudflare Pages Functions half. No DOM lib: Workers types define their own Response/Headers, and mixing the two produces spurious conflicts.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["functions/**/*.ts", "src/lib/**/*.ts"]
+}

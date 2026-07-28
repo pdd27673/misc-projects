@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSUN Class Finder</title>
+<meta name="description" content="Check CSUN class availability and meeting times, then build a conflict-free schedule for next semester.">
+<link rel="stylesheet" href="./styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <h1>CSUN Class Finder</h1>
+    <p class="tagline">Availability, meeting times, and a schedule that actually fits together.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <form id="search-form" class="panel search" autocomplete="off">
+    <div class="field grow">
+      <label for="query">Class</label>
+      <input id="query" name="query" type="text" placeholder="COMP 586, COMP, or 12345" required>
+      <p class="hint">A course, a whole subject, or a five-digit class number.</p>
+    </div>
+
+    <div class="field">
+      <label for="term">Term</label>
+      <select id="term" name="term"></select>
+    </div>
+
+    <div class="field checkbox">
+      <label><input type="checkbox" id="open-only"> Open seats only</label>
+    </div>
+
+    <button type="submit" class="primary" id="search-button">Search</button>
+  </form>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <section id="results-panel" class="panel" hidden>
+    <div class="panel-head">
+      <h2 id="results-title">Results</h2>
+      <span id="results-count" class="muted"></span>
+    </div>
+    <div id="results"></div>
+  </section>
+
+  <section class="panel planner">
+    <div class="panel-head">
+      <h2>Plan next semester</h2>
+      <span class="muted">Search a course, add it, repeat — then build schedules.</span>
+    </div>
+
+    <div id="plan-courses" class="chips">
+      <p class="empty">No courses added yet.</p>
+    </div>
+
+    <details class="prefs">
+      <summary>Preferences</summary>
+      <div class="prefs-grid">
+        <div class="field">
+          <label for="earliest">No class before</label>
+          <input id="earliest" type="time">
+        </div>
+        <div class="field">
+          <label for="latest">No class after</label>
+          <input id="latest" type="time">
+        </div>
+        <div class="field">
+          <label for="max-units">Max units</label>
+          <input id="max-units" type="number" min="1" max="24" step="0.5" placeholder="any">
+        </div>
+        <div class="field">
+          <span class="label">Keep free</span>
+          <div id="days-off" class="day-toggles"></div>
+        </div>
+        <div class="field checkbox">
+          <label><input type="checkbox" id="include-closed"> Include full sections</label>
+        </div>
+      </div>
+    </details>
+
+    <button id="build-button" class="primary" disabled>Build schedules</button>
+    <div id="schedules"></div>
+  </section>
+
+  <section class="panel about">
+    <h2>How this works</h2>
+    <p>
+      Searches run server-side in a Cloudflare Pages Function, which fetches CSUN's
+      Class Search and reads the section list out of the page. The parser matches on
+      column headings rather than CSS selectors, so a schedule redesign does not
+      silently break it.
+    </p>
+    <p>
+      Schedule building happens in your browser over the sections you have already
+      loaded — it enumerates every conflict-free combination and ranks them by fewest
+      days on campus.
+    </p>
+    <p class="muted">
+      Seat counts are as accurate as the moment the page was fetched. Always confirm in
+      the <a href="https://www.csun.edu/class-search" rel="noopener">official Class Search</a>
+      before you register.
+    </p>
+  </section>
+
+</main>
+
+<footer class="wrap footer">
+  <p>Not affiliated with California State University, Northridge.</p>
+</footer>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

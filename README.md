@@ -1,10 +1,17 @@
-# CSUN Class Scraper
+# CSUN Class Finder
 
 Look up a CSUN class and get back its **availability and meeting times** — then
 use those sections to build a **conflict-free schedule** for next semester.
 
 As of 28 July 2026, "next semester" resolves to **Fall 2026** (PeopleSoft term
 code `2267`), which is what every command defaults to.
+
+Two front ends over one idea:
+
+- a **web app** on Cloudflare Pages — search, seat counts, and a week-grid
+  schedule builder
+- a **Python CLI** (`csun-classes`) — the original proof of concept, still the
+  fastest way to script against it
 
 ```
 $ csun-classes find COMP 586
@@ -22,28 +29,94 @@ COMP 586 — Advanced Topics in Software Engineering
 3 section(s), 2 still enrollable.
 ```
 
-## Status
+## One caveat, stated plainly
 
-**Stage 1 (this commit): working proof of concept.** A Python library + CLI that
-parses class-search pages into typed sections and plans schedules around them.
-118 tests, all green.
+The parser and planner are verified against fixtures — 118 Python tests and 95
+TypeScript tests, the two run against **the same fixture files** so the
+implementations are held to identical results.
 
-**Stage 2 (next): a web version deployed on Cloudflare Pages**, following the
-same pattern as the `gametime-grid-sports-epg` branch — a Pages Function does
-the fetch and parse server-side, the UI renders it.
+The *network* layer is not verified. `csun.edu` was unreachable from the
+sandbox this was built in, so the search endpoint's parameter names could not
+be confirmed against the live site. Everything downstream of "here is the HTML"
+is tested; the query string that produces that HTML is an informed guess.
 
-### One caveat, stated plainly
+So it is kept adjustable rather than hardcoded:
 
-The parser and planner are verified against fixtures. The *network* layer is
-not: `csun.edu` was unreachable from the sandbox this was built in, so the
-search endpoint's parameter names could not be confirmed against the live site.
-That is why the design puts the fetch behind a swappable `Source` and keeps the
-request mapping in editable JSON rather than in code — see
-[Pointing it at the live site](#pointing-it-at-the-live-site).
+- the web app reads it from `CSUN_*` environment variables — a Pages dashboard
+  edit, no redeploy
+- the CLI reads it from a JSON file, or skips it entirely with `--url` / `--html`
+- when the fetch fails, the web app says so and falls back to clearly-labelled
+  sample data instead of showing a blank page
 
-Everything works today against a page you save from the browser.
+## The web app
 
-## Install
+```bash
+npm install
+npm run build          # bundles the client into public/app.js
+npx wrangler pages dev public
+```
+
+Deployed on Cloudflare Pages: build command `npm run build`, output directory
+`public`. `functions/` is picked up automatically, so `/api/classes` is served
+by `functions/api/classes.ts`.
+
+Searching runs server-side in the Pages Function for two reasons: the browser
+cannot call `csun.edu` directly (no CORS headers), and Cloudflare's egress
+reaches the site over a normal network path. Schedule building runs in the
+browser over sections already loaded, so changing a preference is instant.
+
+### API
+
+```
+GET  /api/classes?q=COMP%20586&term=2267[&openOnly=1]
+GET  /api/classes?subject=COMP&course=586
+GET  /api/classes?classNumber=12345
+POST /api/classes            # body: HTML of a page you saved yourself
+```
+
+```json
+{
+  "term": "Fall 2026",
+  "termCode": "2267",
+  "sectionCount": 3,
+  "openCount": 2,
+  "sections": [
+    {
+      "course": "COMP 586",
+      "classNumber": "12345",
+      "section": "01",
+      "status": "open",
+      "seatsAvailable": 8,
+      "seatsCapacity": 30,
+      "meetings": [
+        {"days": ["Tu", "Th"], "start": 1140, "end": 1215,
+         "location": "JD 1600", "text": "TuTh 7:00PM-8:15PM @ JD 1600"}
+      ]
+    }
+  ]
+}
+```
+
+Meeting times are minutes past midnight, so overlap checks are plain
+arithmetic.
+
+### If CSUN changes its query string
+
+Set these in Pages ▸ Settings ▸ Environment variables:
+
+| Variable | Default |
+|----------|---------|
+| `CSUN_SEARCH_URL` | `https://www.csun.edu/class-search/` |
+| `CSUN_PARAM_TERM` | `term` |
+| `CSUN_PARAM_SUBJECT` | `subject` |
+| `CSUN_PARAM_CATALOG` | `catalog_nbr` |
+| `CSUN_PARAM_CLASS_NUMBER` | `class_nbr` |
+| `CSUN_PARAM_OPEN_ONLY` | `open_only` |
+| `CSUN_TERM_FORMAT` | `code` (or `name`, `slug`) |
+
+## The CLI
+
+### Install
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
@@ -193,15 +266,22 @@ plan(result.sections, ["COMP 586"], preferences=Preferences(latest=time(21, 0)))
 
 ## Layout
 
+The parsing, term and planning logic exists twice — Python for the CLI,
+TypeScript for the web app — because a Pages Function cannot run Python. The
+two are kept honest by sharing `tests/fixtures/`.
+
 | Path | What it does |
 |------|--------------|
-| `csunclasses/terms.py` | Term codes and "which semester is next" |
-| `csunclasses/models.py` | `Section`, `Meeting`, `Status`, JSON shape |
-| `csunclasses/normalize.py` | `"TuTh 7:00PM-8:15PM"` → days + times |
-| `csunclasses/parse.py` | Heading-driven extraction from HTML |
-| `csunclasses/sources.py` | Where the HTML comes from (file, URL, search) |
-| `csunclasses/planner.py` | Conflict detection and schedule building |
+| `csunclasses/terms.py` · `src/lib/terms.ts` | Term codes and "which semester is next" |
+| `csunclasses/models.py` · `src/lib/types.ts` | `Section`, `Meeting`, `Status`, JSON shape |
+| `csunclasses/normalize.py` · `src/lib/normalize.ts` | `"TuTh 7:00PM-8:15PM"` → days + times |
+| `csunclasses/parse.py` · `src/lib/parse.ts` | Heading-driven extraction from HTML |
+| `csunclasses/planner.py` · `src/lib/planner.ts` | Conflict detection and schedule building |
+| `csunclasses/sources.py` · `src/lib/csun.ts` | Where the HTML comes from |
 | `csunclasses/cli.py` | `csun-classes` |
+| `src/lib/html.ts` | A small HTML parser — Workers has no DOM |
+| `src/client/main.ts` | The browser app |
+| `functions/api/classes.ts` | The Pages Function |
 
 ## Degree reports
 
@@ -213,9 +293,13 @@ itself is not built yet.
 ## Tests
 
 ```bash
-.venv/bin/python -m pytest
+.venv/bin/python -m pytest    # 118 tests
+npm test                      # 95 tests
+npm run typecheck
 ```
 
 Fixtures cover both layouts schedule pages use — a PeopleSoft results table
 (with status drawn as an icon whose word lives in `alt=`) and a card layout of
-`Label: value` pairs.
+`Label: value` pairs. Both suites read the same two files, so a divergence
+between the Python and TypeScript parsers shows up as a failing test rather
+than as two subtly different answers.

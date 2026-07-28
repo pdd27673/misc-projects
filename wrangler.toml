@@ -1,0 +1,12 @@
+# Cloudflare Pages project config.
+#
+# `functions/` is picked up automatically, so /api/classes is served by
+# functions/api/classes.ts. Build command: `npm run build`.
+#
+# The CSUN_* variables in functions/api/classes.ts are optional overrides for
+# the search endpoint's parameter names — set them in the Pages dashboard
+# under Settings ▸ Environment variables if CSUN changes its query string.
+
+name = "csun-class-finder"
+compatibility_date = "2026-07-01"
+pages_build_output_dir = "public"
